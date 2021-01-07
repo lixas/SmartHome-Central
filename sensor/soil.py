@@ -66,7 +66,7 @@ class UI(Observer, sensorBase):
 
         self.updValue = lv.label(sens_c)
         self.updValue.set_text("{} ---".format(lv.SYMBOL.EYE_CLOSE))
-        self.updValue.set_pos(140, 37)
+        self.updValue.set_pos(140, 0)
 
         t.delete()  # created for workaround to make to move temp value to desired location
         del t
@@ -81,7 +81,6 @@ class UI(Observer, sensorBase):
         #     int(payload[32:34], 16)
         # ))
 
-    @micropython.native  # type: ignore
     def randomizeHumidity(self, evt):
         if divmod(int(utime.time() - self.lastUpdTime), self.updateEach)[0] > 0:
             self.hum_b.set_value(random.randint(0, 100), lv.ANIM.ON)

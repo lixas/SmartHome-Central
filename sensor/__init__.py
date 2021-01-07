@@ -16,36 +16,20 @@ class sensorBase():
 
     @micropython.native  # type: ignore
     def tickClock(self, evt):
-        delta = utime.time() - self.lastUpdTime
-        ulocaltime = utime.localtime(delta)
+        ulocaltime = utime.localtime(utime.time() - self.lastUpdTime)
         h = ulocaltime[3]
         m = ulocaltime[4]
         s = ulocaltime[5]
 
-        del delta, ulocaltime
+        del ulocaltime
 
-        t = "{} ".format(lv.SYMBOL.EYE_OPEN)
         if h > 0:
-            # timeStr += str(h) + ":"
-            t = "{}{}:".format(t, h)
-            if m in range(1, 10):
-                # timeStr += "0" + str(m) + ":"
-                t = "{}0{}:".format(t, m)
-            else:
-                # timeStr += str(m) + ":"
-                t = "{}{}:".format(t, m)
+            self.updValue.set_text("{}:{:02d}:{:02d}".format(h, m, s))
         elif m > 0:
-            # timeStr += str(m) + ":"
-            t = "{}{}:".format(t, m)
-
-        if m > 0 and s in range(0, 10):
-            # timeStr += "0" + str(s)
-            t = "{}0{}".format(t, s)
+            self.updValue.set_text("{}:{:02d}".format(m, s))
         else:
-            # timeStr += str(s)
-            t = "{}{}".format(t, s)
+            self.updValue.set_text("{}".format(s))
 
-        self.updValue.set_text(t)
 
     def sensorUpdated(self):
         self.lastUpdTime = utime.time()
