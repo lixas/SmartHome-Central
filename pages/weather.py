@@ -31,24 +31,26 @@ class ui(Observer, pageBase):
         gc.collect()
         r = req.get("http://api.openweathermap.org/data/2.5/onecall?lat=54.69&lon=25.28&units=metric&exclude=minutely,hourly,alerts&appid={}".format(self.apikey))
         if r.status_code == 200:
-            try:
-                resp = r.json()
-                r.close()
+            # try:
+            resp = r.json()
+            r.close()
 
-                Event("Sensor weather", resp["current"])      # curent conditions
-                for i in range(7):
-                    weekday = divmod(localtime()[6]+i, 7)[1]
-                    tmp = {"min":floor(resp["daily"][i]["temp"]["min"]), "max":ceil(resp["daily"][i]["temp"]["max"])}
-                    sun = {"rise":resp["daily"][i]["sunrise"]-self.delta, "set":resp["daily"][i]["sunset"]-self.delta}   # sunrise/set
-                    wnd = {"dir":resp["daily"][i]["wind_deg"], "spd":round(resp["daily"][i]["wind_speed"]*10)/10}
-                    cnd = {"img":resp["daily"][i]["weather"][0]["icon"], "txt":resp["daily"][i]["weather"][0]["main"]}
-                    fal = {"rain":resp["daily"][i].get("rain") or 0, "snow":resp["daily"][i].get("snow") or 0}          # precipitation
-                    uvi = resp["daily"][i].get("uvi") or 0
-                    Event("Page Weather {}".format(i), weekday, tmp, sun, wnd, cnd, fal, uvi)
-                    del tmp, sun, wnd, cnd, weekday
-                    gc.collect()
-            except:
-                return
+            Event("Sensor weather", resp["current"])      # curent conditions
+            for i in range(7):
+                day = resp["daily"][i]
+                weekday = divmod(localtime()[6]+i, 7)[1]
+                tmp = {"min":floor(day["temp"]["min"]), "max":ceil(day["temp"]["max"])}
+                sun = {"rise":day["sunrise"]-self.delta, "set":day["sunset"]-self.delta}   # sunrise/set
+                wnd = {"dir":day["wind_deg"], "spd":round(day["wind_speed"]*10)/10}
+                cnd = {"img":day["weather"][0]["icon"], "txt":day["weather"][0]["main"]}
+                fal = {"rain":day.get("rain") or 0, "snow":day.get("snow") or 0}          # precipitation
+                uvi = day.get("uvi") or 0
+                Event("Page Weather {}".format(i), weekday, tmp, sun, wnd, cnd, fal, uvi)
+                print("Page Weather {}".format(i), weekday, tmp, sun, wnd, cnd, fal, uvi)
+                del tmp, sun, wnd, cnd, weekday
+                gc.collect()
+            # except:
+            #     return
             del resp
             gc.collect()
 
@@ -56,7 +58,6 @@ class day_container(Observer, pageBase):
     def __init__(self, parent, num):
         Observer.__init__(self)  # DON'T FORGET THIS for event to work
         self.observe("Page Weather {}".format(num), self.update)
-        self.angle = 0
         self.num=num
         self.draw_day(parent)
     
@@ -64,8 +65,7 @@ class day_container(Observer, pageBase):
         self.title.set_text(weekday_name[weekday])
         self.tmp.set_text("{}{} / {}{}".format(tmp.get("min"), u"\u00B0", tmp.get("max"), u"\u00B0"))
         
-        self.wind_dir.set_angle( -self.angle + wnd.get("dir")*10)
-        self.angle = wnd.get("dir")*10
+        self.wind_dir.set_angle( wnd.get("dir")*10)
         self.wind_spd.set_text("{} m/s".format(wnd.get("spd")))
 
         self.cond_t.set_text("{}".format(cnd.get("txt")))

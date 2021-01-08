@@ -17,8 +17,6 @@ class UI(Observer, sensorBase):
         self.observe("tick 1 sec", self.tickClock)
         self.observe("Sensor weather", self.loadData)
 
-        self.angle = 0
-
     def drawSensor(self, page, parts, sensorTitle):
         sensCont = lv.cont(page)
         sensCont.set_drag_parent(True)
@@ -125,8 +123,7 @@ class UI(Observer, sensorBase):
             "{:.1f}{}".format(current.get("temp"), u"\u00B0")
         )
         self.wind_v.set_text("{:.1f} m/s".format(current.get("wind_speed")))
-        self.wind_dir.set_angle( -self.angle + current.get("wind_deg")*10)
-        self.angle = current.get("wind_deg")*10
+        self.wind_dir.set_angle(current.get("wind_deg")*10)
         self.uv.set_text("{:.1f}".format(current.get("uvi")))
         self.cond.set_text("{}".format(current["weather"][0]["main"]))
         # self.today_v.set_text(
