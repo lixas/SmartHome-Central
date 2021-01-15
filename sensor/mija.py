@@ -112,7 +112,7 @@ class UI(Observer, sensorBase):
         self.sensorUpdated()
         if self.lastUpdCount != int(payload[32:34], 16):    # counter from payload
             tmp = int(payload[20:24],16)
-            tmp = tmp if tmp < 60000 else 65536 - tmp
+            tmp = tmp if tmp < 60000 else -1*(65536 - tmp)
             self.temp_v.set_text(
                 "{:.1f}{}".format(tmp/10, u"\u00B0")
             )        # temp °

@@ -14,7 +14,6 @@ class sensorBase():
         decoder.open_cb = open_png
         gc.collect()
 
-    @micropython.native  # type: ignore
     def tickClock(self, evt):
         ulocaltime = utime.localtime(utime.time() - self.lastUpdTime)
         h = ulocaltime[3]
