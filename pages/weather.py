@@ -7,15 +7,19 @@ from time import localtime
 import json, gc, os, lib.urequests as req               # type: ignore
 
 weekday_name= ["Pirmadienis", "Antradienis", "Treciadienis", "Ketvirtadienis", "Penktadienis", "Sestadienis", "Sekmadienis"]
+forecast_days = 4
 
 class ui(Observer, pageBase):
-    def __init__(self, app, page):
-        self.delta = 946684800 - 3600*2      # (timestamp + gmt)
+    def __init__(self, app, page, gmt):
+        self.delta = 946684800 - 3600*gmt      # (timestamp + gmt)
         Observer.__init__(self)  # DON'T FORGET THIS for event to work
         pageBase.__init__(self)
         self.observe("Reload weather", self.get_weather_data)
         with open('settings.json', 'r') as f:
-            self.apikey = json.loads(f.read())["apikey"]["openweather"]
+            data = json.loads(f.read())["openweather"]
+            self.apikey = data["key"]
+            self.lat = data["lat"]
+            self.lon = data["lon"]
 
         c1 = lv.cont(page)
         c1.set_drag_parent(True)
@@ -24,20 +28,25 @@ class ui(Observer, pageBase):
         c1.set_fit2(lv.FIT.PARENT, lv.FIT.MAX)
         c1.set_width(page.get_width())
 
-        for i in range(7):
+        for i in range(forecast_days):
             day_container(c1, i)
     
     def get_weather_data(self):
         gc.collect()
-        r = req.get("http://api.openweathermap.org/data/2.5/onecall?lat=54.69&lon=25.28&units=metric&exclude=minutely,hourly,alerts&appid={}".format(self.apikey))
+        r = req.get("http://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&units=metric&exclude=minutely,hourly,alerts&appid={}".format(self.lat, self.lon, self.apikey))
         if r.status_code == 200:
-            # try:
             resp = r.json()
             r.close()
 
+            Event("Startup sequence", "Filling current weather...")
             Event("Sensor weather", resp["current"])      # curent conditions
-            for i in range(7):
-                day = resp["daily"][i]
+            for i in range(forecast_days):
+                Event("Startup sequence", "Fill forecast day {}...".format(i+1))
+                try:
+                    day = resp["daily"][i]
+                except:
+                    break      #exit loop
+                    # return
                 weekday = divmod(localtime()[6]+i, 7)[1]
                 tmp = {"min":floor(day["temp"]["min"]), "max":ceil(day["temp"]["max"])}
                 sun = {"rise":day["sunrise"]-self.delta, "set":day["sunset"]-self.delta}   # sunrise/set
@@ -46,11 +55,8 @@ class ui(Observer, pageBase):
                 fal = {"rain":day.get("rain") or 0, "snow":day.get("snow") or 0}          # precipitation
                 uvi = day.get("uvi") or 0
                 Event("Page Weather {}".format(i), weekday, tmp, sun, wnd, cnd, fal, uvi)
-                print("Page Weather {}".format(i), weekday, tmp, sun, wnd, cnd, fal, uvi)
                 del tmp, sun, wnd, cnd, weekday
                 gc.collect()
-            # except:
-            #     return
             del resp
             gc.collect()
 

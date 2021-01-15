@@ -1,3 +1,5 @@
+Micropython + LVGL firmware for ESP32 PSRAM and 16MB flash boards added
+
 # SmartHome-Central
 
 My personal project to learn [Micropython](https://github.com/micropython/micropython) and by utilizing [LVGL](https://github.com/lvgl/lv_binding_micropython) on ILI9341 display

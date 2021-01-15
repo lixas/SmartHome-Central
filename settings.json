@@ -1,21 +1,24 @@
 {
+"OTA":"http://127.0.0.1/OTA/",
 "gmt": 2,
 "screen":{
 	"time": 120,
+	"pin": 32,
 	"bright": 400,
-	"down": 2
+	"dim": 2
 },
 "wifi": {
 	"ssid" : "Your-WiFi-Name",
 	"pass" : "Very-Secret-Password"
 },
 "mqtt": {
-	"broker":"server.mqtt.com",
+	"broker":"broker.hivemq.com",
 	"base":"BLE/to/HTTP/path/onbroker"
 },
-"apikey": {
-	"openweather":"Your-OpenWeather-API-key",
-	"github": "Not-Yet-Need-Github-Token"
+"openweather": {
+	"key": "Your-OpenWeather-API-key",
+	"lat": 12.34,
+	"lon": 23.45
 },
 "sensors": [
 	{
@@ -39,5 +42,4 @@
 		"order" : 6,
 		"simulate": 0
 	}
-]
-}
+]}

@@ -21,6 +21,7 @@ if not sta_if.isconnected():
         time.sleep(0.3)
 print(".")
 print("Connected")
+print('network config:', sta_if.ifconfig())
 
 gc.collect()
 
@@ -83,37 +84,42 @@ class screen_main(lv.obj):
 
     def __init__(self, app, *args, **kwds):
         self.app = app
+        gmt = global_settings["gmt"]
         super().__init__(*args, **kwds)
+
+        # Observer.__init__(self)  # DON'T FORGET THIS for events to work
+        # Observer.observe("Startup sequence", self.on_startup_sequence_event)
         # self.theme = AdvancedDemoTheme()
 
         tabview = lv.tabview(self)
         tabview.set_btns_pos(lv.tabview.TAB_POS.LEFT)
-        # _tabview.set_anim_time(0)
+        tabview.set_anim_time(0)
         tabview.set_style_local_pad_top(lv.tabview.PART.TAB_BG, lv.STATE.DEFAULT, 20)
         tabview.set_style_local_pad_right(lv.tabview.PART.TAB_BG, lv.STATE.DEFAULT, 10)
         # _tabview.set_event_cb(self.tabview_event)
         tray_clock(self)
 
         pages.home.ui(self.app, tabview.add_tab(lv.SYMBOL.HOME))
-        pages.weather.ui(self.app, tabview.add_tab("W"))
+        pages.weather.ui(self.app, tabview.add_tab("W"), gmt)
         # pages.home.ui(self.app, tabview.add_tab(lv.SYMBOL.HOME))
 
 
         self.mbox = lv.msgbox(lv.scr_act())
         self.mbox.set_text("Initializing...")
-        self.mbox.set_text("Updating clock from NTP")
-        lib.ntptime2.settime(global_settings["gmt"])
+        self.mbox.set_text("Updating clock from NTP...")
+        lib.ntptime2.settime(gmt)
         # self.mbox.align(None, lv.ALIGN.CENTER, 0, 0)
-        self.first_sequence_event("Drawing sensors...")
+        self.on_startup_sequence_event("Drawing sensors...")
         Event("Draw sensors")
-        self.first_sequence_event("Loading weather...")
+        self.on_startup_sequence_event("Loading weather data...")
         Event('Reload weather')
-        self.first_sequence_event("Done! All set.")
-        self.mbox.start_auto_close(500)
+        self.on_startup_sequence_event("Done! All set.")
+        self.mbox.start_auto_close(1500)
         print("Done! All set.")
+        # Observer.forget("Startup sequence")
         del self.mbox
 
-    def first_sequence_event(self, evt_text):
+    def on_startup_sequence_event(self, evt_text):
         self.mbox.set_text("{} \n {}".format(self.mbox.get_text(), evt_text) )
         self.mbox.align(None, lv.ALIGN.IN_TOP_LEFT, 0, 0)
 
@@ -160,11 +166,11 @@ class Hardware(Observer):
     def turn_screen_off(self, timer):
         if self.lcd:
             if time.time() > self.lcd_time:
-                brightness.duty(global_settings["screen"]["down"])
+                brightness.duty(global_settings["screen"]["dim"])
                 self.lcd = 0
 
 gc.collect()
-brightness = machine.PWM(machine.Pin(32), freq=20000, duty=global_settings["screen"]["bright"])  # create and configure in one go
+brightness = machine.PWM(machine.Pin(global_settings["screen"]["pin"]), freq=20000, duty=global_settings["screen"]["bright"])  # create and configure in one go
 
 Hardware().init_gui()
 
@@ -191,12 +197,9 @@ mqtt.set_callback(mqtt_evt)
 mqtt.connect()
 mqtt.subscribe("{}#".format(global_settings["mqtt"]["base"]))
 
-# lv.task_enable(
-#     lv.task_create(lambda t: Event('tick 1 sec', None), 1000, lv.TASK_PRIO.HIGHEST, None)      # 1sec
-# )
 
 lv.task_enable(
-    lv.task_create(mqtt_checker, 300, lv.TASK_PRIO.HIGH, None)
+    lv.task_create(mqtt_checker, 300, lv.TASK_PRIO.HIGH, None)      # 0.3s
 )
 
 lv.task_enable(

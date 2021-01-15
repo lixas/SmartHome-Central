@@ -111,9 +111,10 @@ class UI(Observer, sensorBase):
         self.rssi.set_text("{} {}".format(lv.SYMBOL.BLUETOOTH, rssi))
         self.sensorUpdated()
         if self.lastUpdCount != int(payload[32:34], 16):    # counter from payload
-
+            tmp = int(payload[20:24],16)
+            tmp = tmp if tmp < 60000 else 65536 - tmp
             self.temp_v.set_text(
-                "{}{}".format(int(payload[20:24],16)/10, u"\u00B0")
+                "{:.1f}{}".format(tmp/10, u"\u00B0")
             )        # temp °
 
             self.hum_v.set_text("{}%".format(int(payload[24:26],16)))
